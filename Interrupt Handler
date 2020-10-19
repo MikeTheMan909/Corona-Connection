@@ -73,7 +73,7 @@ void USART3_IRQHandler(void)
 		
 		if(TxCnt < Txlg)
 		//data versturen
-			USART_SendData(USART1, (uint16_t)Buff[TxCnt]);
+			USART_SendData(USART1, (uint8_t)p1[TxCnt]);
 			TxCnt++;
 		else
 		{
