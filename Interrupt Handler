@@ -1,22 +1,86 @@
-jk
-void USART2_IRQHandler(void)
-{
-	if( USART_GetITStatus(USART2, USART_IT_TXE))
-	{
-		if(Data = complete)
-		{
-		USART_ITConfig(USART2,USART_IT_TXE,DISABLE);
-		}
-	}
-  // check if the USART2 receive interrupt flag was set
-	if( USART_GetITStatus(USART2, USART_IT_RXNE))
-	{
-		USART_ClearITPendingBit(USART2, USART_IT_RXNE);
-		int i;
-		char c = USART2->DR & 0xFF;
-		LCD_putchar(c);
 
-		UART_putchar(c);
+#include "includes.h"
+
+
+
+
+
+
+void UART3_init(void)
+{
+	/* --------------------------- System Clocks Configuration -----------------*/
+	  /* USART2 clock enable */
+	  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
+
+	  /* GPIOA clock enable */
+	  RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOD, ENABLE);
+
+	  GPIO_InitTypeDef GPIO_InitStructure2;
+
+	  /*-------------------------- GPIO Configuration ----------------------------*/
+	  GPIO_InitStructure2.GPIO_Pin = GPIO_Pin_8 | GPIO_Pin_9;
+	  GPIO_InitStructure2.GPIO_Mode = GPIO_Mode_AF;
+	  GPIO_InitStructure2.GPIO_OType = GPIO_OType_PP;
+	  GPIO_InitStructure2.GPIO_PuPd = GPIO_PuPd_DOWN;
+	  GPIO_InitStructure2.GPIO_Speed = GPIO_Speed_50MHz;
+	  GPIO_Init(GPIOD, &GPIO_InitStructure2);
+
+	  /* Connect USART pins to AF */
+	  GPIO_PinAFConfig(GPIOD, GPIO_PinSource8, GPIO_AF_USART3);   // USART2_TX
+	  GPIO_PinAFConfig(GPIOD, GPIO_PinSource9, GPIO_AF_USART3);  // USART2_RX
+
+	  USART_InitTypeDef USART_InitStructure2;
+
+	/* USARTx configuration ------------------------------------------------------*/
+	/* USARTx configured as follow:
+	      - BaudRate = 115200 baud
+	      - Word Length = 8 Bits
+	      - One Stop Bit
+	      - No parity
+	      - Hardware flow control disabled (RTS and CTS signals)
+	      - Receive and transmit enabled
+	*/
+	USART_InitStructure2.USART_BaudRate = 115200;
+	USART_InitStructure2.USART_WordLength = USART_WordLength_8b;
+	USART_InitStructure2.USART_StopBits = USART_StopBits_1;
+	USART_InitStructure2.USART_Parity = USART_Parity_No;
+	USART_InitStructure2.USART_HardwareFlowControl = USART_HardwareFlowControl_None;
+
+	USART_InitStructure2.USART_Mode = USART_Mode_Rx | USART_Mode_Tx;
+
+	USART_Init(USART3, &USART_InitStructure2);
+	USART_ITConfig(USART3,USART_IT_RXNE,ENABLE);
+
+	USART_Cmd(USART3, ENABLE);
+}
+
+void UART3_INT_init(void)
+{
+	NVIC_InitTypeDef   NVIC_InitStructure2;
+
+	NVIC_InitStructure2.NVIC_IRQChannel = USART3_IRQn;
+	NVIC_InitStructure2.NVIC_IRQChannelPreemptionPriority = 1;
+	NVIC_InitStructure2.NVIC_IRQChannelSubPriority = 1;
+	NVIC_InitStructure2.NVIC_IRQChannelCmd = ENABLE;
+	NVIC_Init(&NVIC_InitStructure2);
+}
+
+void USART3_IRQHandler(void)
+{
+	if( USART_GetITStatus(USART3, USART_IT_RXNE))
+	{
+		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+		
+		
+		
+		
+		int i;
+		char c = USART3->DR & 0xFF;
+//		LCD_XY(10,1);
+//		LCD_put("UART:   ");
+//		LCD_XY(15,1);
+//		LCD_putchar(c);
+
 		if(c > 64 && c < 91)
 			c += 32;
 		if(c <= 13)
@@ -33,9 +97,7 @@ void USART2_IRQHandler(void)
 			string[charcounter] = c;
 			charcounter++;
 		}
-
-
 		while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // Wait for Empty
-
-	}
+	}	
 }
+
