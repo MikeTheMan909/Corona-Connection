@@ -1,15 +1,13 @@
-
 #include "includes.h"
 
-
-
-
-
+unsigned char Buff[SegmentLength];
+int charcounter;
+int packetlength; //zet de length van transmissie
 
 void UART3_init(void)
 {
 	/* --------------------------- System Clocks Configuration -----------------*/
-	  /* USART2 clock enable */
+	  /* USART3 clock enable */
 	  RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART3, ENABLE);
 
 	  /* GPIOA clock enable */
@@ -67,37 +65,30 @@ void UART3_INT_init(void)
 
 void USART3_IRQHandler(void)
 {
+	if( USART_GetITStatus(USART3, USART_IT_TXE))
+	{
+		int TxCnt, Txlg;
+		
+		Txlg = Packetlenght;
+		
+		if(TxCnt < Txlg)
+		//data versturen
+			USART_SendData(USART1, (uint16_t)Buff[TxCnt]);
+			TxCnt++;
+		else
+		{
+		  TxCnt = 0;
+		  USART_ClearITPendingBit(USART3, USART_IT_TC);
+		  USART_ITConfig(USART3, USART_IT_TXE, DISABLE); // <-- interrupt disable!!
+		}
+	}
 	if( USART_GetITStatus(USART3, USART_IT_RXNE))
 	{
 		USART_ClearITPendingBit(USART3, USART_IT_RXNE);
+		Buff[charcounter] = USART3->DR & 0xFF; 
+		charcounter++;
+		if(charcounter >= SegmentLength) charcounter = 0;
+		while (USART_GetFlagStatus(USART3, USART_FLAG_TC) == RESET); // Wait for Empty
 		
-		
-		
-		
-		int i;
-		char c = USART3->DR & 0xFF;
-//		LCD_XY(10,1);
-//		LCD_put("UART:   ");
-//		LCD_XY(15,1);
-//		LCD_putchar(c);
-
-		if(c > 64 && c < 91)
-			c += 32;
-		if(c <= 13)
-		{
-			for(i=0;i<charcounter;i++)
-			{
-				USART_SendData(USART2, string[i]); // Echo Char
-			}
-			charcounter = 0;
-			USART_SendData(USART2, c); // Echo Char
-		}
-		else
-		{
-			string[charcounter] = c;
-			charcounter++;
-		}
-		while (USART_GetFlagStatus(USART2, USART_FLAG_TC) == RESET); // Wait for Empty
 	}	
 }
-
